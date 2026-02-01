@@ -1,17 +1,20 @@
 const PiranhaMessage = require('../../PiranhaMessage')
 
 /**
- * CreatePlayerOkMessage (20201)
+ * AvatarDataMessage (20203)
  * 
- * Sent to client after successful character creation.
+ * Sent to client to trigger the game loading after avatar is set.
  * Contains a complete class_76 player avatar.
  * 
- * HARDCODED VERSION for testing - encodes minimal player avatar
+ * Client class: package_42.class_166
+ * 
+ * This message triggers method_1617() which calls method_706() 
+ * to actually load the player into the game.
  */
-class CreatePlayerOkMessage extends PiranhaMessage {
+class AvatarDataMessage extends PiranhaMessage {
   constructor(client, playerData) {
     super()
-    this.id = 20201
+    this.id = 20203
     this.client = client
     this.version = 0
     this.playerData = playerData || {}
@@ -51,22 +54,22 @@ class CreatePlayerOkMessage extends PiranhaMessage {
     // 4. Inventory (class_400 -> class_399 -> class_68)
     // class_400:
     this.writeInt(0) // var_610 materials bag: 0 slots
-    this.writeInt(100) // var_550
-    this.writeInt(0) // var_188
-    // var_163: ingredient counts - 11 ints (11 named ingredients in ingredients.csv)
+    this.writeInt(100) // var_550 (game money)
+    this.writeInt(0) // var_188 (diamonds)
+    // var_163: ingredient counts - 11 ints (matching CreatePlayerOkMessage)
     for (let i = 0; i < 11; i++) {
       this.writeInt(0)
     }
     // class_399:
     this.writeInt(0) // var_135 equipment bag: 0 slots
-    this.writeBoolean(true) // var_65
+    this.writeBoolean(true) // var_65 (isMeleeEquipped)
     // class_68:
     this.writeInt(0) // var_121 regular bag: 0 slots
     
     // 5. Attributes (class_375 -> class_87 -> class_86)
     this.writeInt(1) // expLevel
     this.writeInt(100 << 10) // health (100 * 1024)
-    // isAlive() = true, so no boolean
+    // isAlive() = true, so no death boolean needed
     this.writeInt(100 << 10) // energy (100 * 1024)
     this.writeInt(0) // var_95 total XP
     this.writeInt(0) // var_86 current XP
@@ -80,8 +83,8 @@ class CreatePlayerOkMessage extends PiranhaMessage {
     // ========================================
     
     // 6. Player ID (long = 2 ints)
-    this.writeInt(0) // high
-    this.writeInt(1) // low - MUST NOT BE 0!
+    this.writeInt(playerData.idHigh || 0) // high
+    this.writeInt(playerData.idLow || 1) // low - MUST NOT BE 0!
     
     // 7. Player Name
     this.writeString(playerData.name || "Player")
@@ -104,20 +107,18 @@ class CreatePlayerOkMessage extends PiranhaMessage {
     
     // 13. MissionSystem (class_50)
     this.writeInt(0) // 0 active missions
-    // Completed missions BitList: 256 * missionGroups / 32
-    // 6 mission tables (const_401, const_444, const_529, const_397, const_484, const_526)
-    // 256 * 6 = 1536 bits / 32 = 48 ints
+    // Completed missions BitList: 48 ints
     for (let i = 0; i < 48; i++) {
       this.writeInt(0)
     }
     this.writeInt(0) // 0 daily mission cooldowns
     
-    // 14. Visited Levels BitList: ceil(214/32) = 7 ints
+    // 14. Visited Levels BitList: 7 ints
     for (let i = 0; i < 7; i++) {
       this.writeInt(0)
     }
     
-    // 15. Achievements BitList: ceil(53/32) = 2 ints
+    // 15. Achievements BitList: 2 ints
     for (let i = 0; i < 2; i++) {
       this.writeInt(0)
     }
@@ -166,4 +167,4 @@ class CreatePlayerOkMessage extends PiranhaMessage {
   }
 }
 
-module.exports = CreatePlayerOkMessage
+module.exports = AvatarDataMessage

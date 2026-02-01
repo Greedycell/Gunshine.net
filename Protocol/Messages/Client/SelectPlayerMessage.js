@@ -1,24 +1,53 @@
 const PiranhaMessage = require('../../PiranhaMessage')
+const CurrentLevelMessage = require('../Server/CurrentLevelMessage')
 
+/**
+ * SelectPlayerMessage (10201)
+ * 
+ * Sent by client after receiving AvatarDataMessage (20203) to select
+ * which avatar to play with and start the game.
+ * 
+ * Client class: package_42.class_126
+ * 
+ * The client sends this when:
+ * 1. After character creation - intro plays, then sends 10201
+ * 2. When selecting an existing character on the selection screen
+ * 
+ * Server must respond with CurrentLevelMessage (20407) to load the game level.
+ */
 class SelectPlayerMessage extends PiranhaMessage {
-  constructor (bytes, client) {
+  constructor(bytes, client) {
     super(bytes)
     this.client = client
     this.id = 10201
     this.version = 1
   }
 
-  async decode () {
+  async decode() {
     this.data = {}
-
     this.data.HighID = this.readInt()
     this.data.LowID = this.readInt()
-
-    console.log(this.data)
+    
+    console.log('[SelectPlayerMessage] Selected avatar ID:', this.data)
   }
 
-  async process () {
-    this.writeLong(this.data.HighID, this.data.LowID)
+  async process() {
+    console.log('[SelectPlayerMessage] Sending CurrentLevelMessage (20407) to load the game')
+    
+    // Get the player's home level from stored data
+    // Default: Northern Harbor (16777423)
+    // GlobalID = (tableIndex << 20) | rowIndex
+    // Table 16 (levels.csv), row 207 = Northern Harbor
+    const homeLevel = this.client.player?.homeLevel || 16777423
+    
+    // Send CurrentLevelMessage to load the game
+    await new CurrentLevelMessage(this.client, {
+      levelGlobalId: homeLevel,
+      zoneType: 100,       // Hub level type (100+)
+      zoneContainer: 0,
+      zoneData: homeLevel,
+      zoneId: 0
+    }).send()
   }
 }
 
