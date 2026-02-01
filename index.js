@@ -38,6 +38,7 @@ server.on('connection', async (client) => {
     if (packetStr.includes('<policy-file-request/>')) {
       client.write('<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="" to-ports="" secure="false"/></cross-domain-policy>\0')
       client.log('Flash policy request handled')
+      return
     }
       
     const message = {
@@ -96,4 +97,5 @@ process.on("uncaughtException", e => console.log(e));
 
 
 process.on("unhandledRejection", e => console.log(e));
+
 
