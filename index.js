@@ -33,6 +33,12 @@ server.on('connection', async (client) => {
   const packets = Messages.getPackets();
 
   client.on('data', async (packet) => {
+    // Flash policy request
+    const packetStr = packet.toString('utf8', 0, Math.min(packet.length, 100))
+    if (packetStr.includes('<policy-file-request/>')) {
+      client.write('<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="" to-ports="" secure="false"/></cross-domain-policy>\0')
+      client.log('Flash policy request handled')
+      
     const message = {
       id: packet.readUInt16BE(0),
       len: packet.readUIntBE(2, 3),
@@ -86,5 +92,6 @@ mongooseInstance.connect(isSuccess => {
 })
 
 process.on("uncaughtException", e => console.log(e));
+
 
 process.on("unhandledRejection", e => console.log(e));
