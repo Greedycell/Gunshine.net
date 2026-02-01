@@ -33,21 +33,25 @@ server.on('connection', async (client) => {
   const packets = Messages.getPackets();
 
   client.on('data', async (packet) => {
-    // Flash policy request
+    // Check for Flash policy file request
     const packetStr = packet.toString('utf8', 0, Math.min(packet.length, 100))
     if (packetStr.includes('<policy-file-request/>')) {
-      client.write('<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="" to-ports="" secure="false"/></cross-domain-policy>\0')
+      client.write('<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="*" to-ports="*" secure="false"/></cross-domain-policy>\0')
       client.log('Flash policy request handled')
+      return
     }
-      
+
+    const id = packet.readUInt16BE(0)
+    const len = packet.readUIntBE(2, 3)
+
     const message = {
-      id: packet.readUInt16BE(0),
-      len: packet.readUIntBE(2, 3),
-      version: packet.readUInt16BE(5),
-      payload: packet.slice(7, this.len),
+      id: id,
+      len: len,
+      payload: packet.slice(5, 5 + len),
       client,
     }
-    
+
+    // Client sends encrypted packets
     message.payload = await client.crypto.decrypt(message.payload)
 
     if (packets.indexOf(String(message.id)) !== -1) {
@@ -61,10 +65,11 @@ server.on('connection', async (client) => {
         await packet.decode()
         await packet.process()
       } catch (e) {
-        console.log(e)
+        client.log(`Packet processing error for ID ${message.id}: ${e.message}`)
+        console.log(e.stack)
       }
     } else {
-      client.log(`Gotcha undefined ${message.id} packet!`)
+      client.log(`Gotcha undefined ${message.id} packet! (hex: 0x${message.id.toString(16)})`)
     }
   })
 
@@ -94,6 +99,4 @@ mongooseInstance.connect(isSuccess => {
 
 process.on("uncaughtException", e => console.log(e));
 
-
 process.on("unhandledRejection", e => console.log(e));
-

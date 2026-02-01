@@ -330,19 +330,24 @@ class ByteStream {
   }
 
   /**
-   * Send a packet to the server.
+   * Send a packet to the client.
+   * NOTE: Server->Client messages are NOT encrypted in Gunshine protocol.
+   * The client only encrypts Client->Server messages, but expects
+   * Server->Client messages to be unencrypted (plain data).
    */
   send () {
     if (this.id < 20000) return;
     this.encode()
 
-    this.buffer = this.client.crypto.encrypt(this.buffer)
+    // DO NOT encrypt - client does not decrypt incoming messages
+    // this.buffer = this.client.crypto.encrypt(this.buffer)
 
-    const header = Buffer.alloc(7)
+    // Client expects 5-byte header: 2 bytes ID + 3 bytes length
+    // DO NOT send version bytes - client doesn't expect them
+    const header = Buffer.alloc(5)
     header.writeUInt16BE(this.id, 0)
     header.writeUIntBE(this.buffer.length, 2, 3)
-    header.writeUInt16BE(this.version, 5)
-    this.client.write(Buffer.concat([header, this.buffer]))//, Buffer.from([0xFF, 0xFF, 0x0, 0x0, 0x0, 0x0, 0x0])]))
+    this.client.write(Buffer.concat([header, this.buffer]))
     
     if (config.Server.Debug) {
       this.client.log(`Packet ${this.id} (${this.constructor.name}) was sent.`)
