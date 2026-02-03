@@ -36,7 +36,7 @@ server.on('connection', async (client) => {
     // Flash policy request
     const packetStr = packet.toString('utf8', 0, Math.min(packet.length, 100))
     if (packetStr.includes('<policy-file-request/>')) {
-      client.write('<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="*" to-ports="*" secure="false"/></cross-domain-policy>\0')
+      client.write('<?xml version="1.0"?><cross-domain-policy><allow-access-from domain="' + config.Website.Domain + '" to-ports="80,443" secure="true"/></cross-domain-policy>\0')
       client.log('Gotcha flash policy request handled!')
       return
     }
