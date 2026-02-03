@@ -1,17 +1,20 @@
 const PiranhaMessage = require('../../PiranhaMessage')
 
 /**
- * CreatePlayerOkMessage (20201)
+ * AvatarDataMessage (20203)
  * 
- * Sent to client after successful character creation.
+ * Sent to client to trigger the game loading after avatar is set.
  * Contains a complete class_76 player avatar.
  * 
- * HARDCODED VERSION for testing - encodes minimal player avatar
+ * Client class: package_42.class_166
+ * 
+ * This message triggers method_1617() which calls method_706() 
+ * to actually load the player into the game.
  */
-class CreatePlayerOkMessage extends PiranhaMessage {
+class AvatarDataMessage extends PiranhaMessage {
   constructor(client, playerData) {
     super()
-    this.id = 20201
+    this.id = 20203
     this.client = client
     this.version = 0
     this.playerData = playerData || {}
@@ -19,13 +22,10 @@ class CreatePlayerOkMessage extends PiranhaMessage {
 
   async encode() {
     const playerData = this.playerData
-    const log = (msg) => console.log(`[CreatePlayerOk] offset=${this.offset} | ${msg}`)
     
     // ========================================
     // class_75 (base avatar) - super.decode()
     // ========================================
-    
-    log('=== START class_75 ===')
     
     // 1. CharacterData globalID
     // GlobalID = (tableIndex << 20) | rowIndex
@@ -37,7 +37,6 @@ class CreatePlayerOkMessage extends PiranhaMessage {
     // 2097203 = FemalePlayerDoctor (Healer)
     // 2097204 = FemalePlayerDeerHunter (Damage)
     this.writeInt(playerData.characterDataId || 2097199)
-    log('After CharacterData globalID')
     
     // 2. SkillSystem (class_385)
     // 3 skill bars, each with 0 skills
@@ -48,11 +47,9 @@ class CreatePlayerOkMessage extends PiranhaMessage {
     this.writeInt(0) // remainingGlobalCoolDown
     this.writeInt(0) // maxGlobalCoolDown
     this.writeInt(0) // cooldowns count
-    log('After SkillSystem (7 ints)')
     
     // 3. BuffSystem (class_384)
     this.writeInt(0) // 0 buffs
-    log('After BuffSystem (1 int)')
     
     // 4. Inventory (class_400 -> class_399 -> class_68)
     // Decode order in class_400.decode():
@@ -66,26 +63,20 @@ class CreatePlayerOkMessage extends PiranhaMessage {
     //    c. super.decode() -> class_68.decode():
     //       - var_121.decode() (regular bag)
     
-    log('=== START Inventory ===')
-    
     // Materials bag (var_610): 0 slots for now
     this.writeInt(0)
-    log('After materials bag (0 slots)')
     
     // Game money (var_550)
     this.writeInt(100)
-    log('After gameMoney')
     
     // Diamonds (var_188)
     this.writeInt(0)
-    log('After diamonds')
     
     // Ingredients (var_163): 11 ints (11 named ingredient items in ingredients.csv)
     // Note: ingredients.csv has 330 rows but only 11 unique ingredients (each with level sub-rows)
     for (let i = 0; i < 11; i++) {
       this.writeInt(0)
     }
-    log('After 11 ingredients')
     
     // Equipment bag (var_135): 14 slots (prop_classes.csv row count)
     // Each empty slot is just a 0 (null item globalID)
@@ -93,47 +84,35 @@ class CreatePlayerOkMessage extends PiranhaMessage {
     for (let i = 0; i < 14; i++) {
       this.writeInt(0) // empty slot: null item globalID
     }
-    log('After equipment bag (14 empty slots)')
     
     // isMeleeEquipped (var_65)
     this.writeBoolean(true)
-    log('After isMeleeEquipped boolean')
     
     // Regular bag (var_121): 20 slots
     this.writeInt(20)
     for (let i = 0; i < 20; i++) {
       this.writeInt(0) // empty slot: null item globalID
     }
-    log('After regular bag (20 empty slots)')
-    
-    log('=== END Inventory, START Attributes ===')
     
     // 5. Attributes (class_375 -> class_87 -> class_86)
     this.writeInt(1) // expLevel
-    log('After expLevel')
     this.writeInt(100 << 10) // health (100 * 1024)
-    log('After health')
-    // isAlive() = true, so no boolean
+    // isAlive() = true, so no death boolean needed
     this.writeInt(100 << 10) // energy (100 * 1024)
-    log('After energy')
     this.writeInt(0) // var_95 total XP
     this.writeInt(0) // var_86 current XP
     this.writeInt(0) // specialization ID
     this.writeInt(0) // var_283 spec rank
     this.writeInt(0) // var_66 spec XP
     this.writeInt(0) // var_897 flags
-    log('After class_375 attrs (6 ints)')
-    
-    log('=== END class_75, START class_76 ===')
     
     // ========================================
     // class_76 (player-specific)
     // ========================================
     
     // 6. Player ID (long = 2 ints)
-    this.writeInt(0) // high
-    this.writeInt(1) // low - MUST NOT BE 0!
-    log('After Player ID (high=0, low=1)')
+    this.writeInt(playerData.idHigh || 0) // high
+    this.writeInt(playerData.idLow || 1) // low - MUST NOT BE 0!
     
     // 7. Player Name
     this.writeString(playerData.name || "Player")
@@ -156,20 +135,18 @@ class CreatePlayerOkMessage extends PiranhaMessage {
     
     // 13. MissionSystem (class_50)
     this.writeInt(0) // 0 active missions
-    // Completed missions BitList: 256 * missionGroups / 32
-    // 6 mission tables (const_401, const_444, const_529, const_397, const_484, const_526)
-    // 256 * 6 = 1536 bits / 32 = 48 ints
+    // Completed missions BitList: 48 ints
     for (let i = 0; i < 48; i++) {
       this.writeInt(0)
     }
     this.writeInt(0) // 0 daily mission cooldowns
     
-    // 14. Visited Levels BitList: ceil(214/32) = 7 ints
+    // 14. Visited Levels BitList: 7 ints
     for (let i = 0; i < 7; i++) {
       this.writeInt(0)
     }
     
-    // 15. Achievements BitList: ceil(53/32) = 2 ints
+    // 15. Achievements BitList: 2 ints
     for (let i = 0; i < 2; i++) {
       this.writeInt(0)
     }
@@ -215,8 +192,7 @@ class CreatePlayerOkMessage extends PiranhaMessage {
     
     // 26. Version
     this.writeInt(0)
-    log('=== END - Total bytes: ' + this.offset + ' ===')
   }
 }
 
-module.exports = CreatePlayerOkMessage
+module.exports = AvatarDataMessage
