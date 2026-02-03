@@ -11,8 +11,8 @@ const PORT = config.Server.Port
 
 const Crypto = require("./Crypto")
 
-let mongooseInstance = require('./DataBase/mongoose');
-mongooseInstance = new mongooseInstance();
+let mongooseInstance = require('./DataBase/mongoose')
+mongooseInstance = new mongooseInstance()
 
 server.on('connection', async (client) => {
   client.setNoDelay(true)
@@ -30,7 +30,7 @@ server.on('connection', async (client) => {
   client.crypto = new Crypto()
   client.mongoose = mongooseInstance
   
-  const packets = Messages.getPackets();
+  const packets = Messages.getPackets()
 
   client.on('data', async (packet) => {
     // Flash policy request
@@ -93,6 +93,6 @@ mongooseInstance.connect(isSuccess => {
   }
 })
 
-process.on("uncaughtException", e => console.log(e));
+process.on("uncaughtException", e => console.log(e))
 
-process.on("unhandledRejection", e => console.log(e));
+process.on("unhandledRejection", e => console.log(e))

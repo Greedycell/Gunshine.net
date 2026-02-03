@@ -18,18 +18,9 @@ class CreatePlayerOkMessage extends PiranhaMessage {
   }
 
   async encode() {
+    // LogicClientHome
     const playerData = this.playerData
-    const log = (msg) => console.log(`[CreatePlayerOk] offset=${this.offset} | ${msg}`)
-    
-    // ========================================
-    // class_75 (base avatar) - super.decode()
-    // ========================================
-    
-    log('=== START class_75 ===')
-    
-    // 1. CharacterData globalID
-    // GlobalID = (tableIndex << 20) | rowIndex
-    // Table 2 (characters.csv) has player characters at rows 47-52:
+
     // 2097199 = MalePlayerConstructionWorker (Tank)
     // 2097200 = MalePlayerDoctor (Healer)
     // 2097201 = MalePlayerDeerHunter (Damage)
@@ -37,185 +28,123 @@ class CreatePlayerOkMessage extends PiranhaMessage {
     // 2097203 = FemalePlayerDoctor (Healer)
     // 2097204 = FemalePlayerDeerHunter (Damage)
     this.writeInt(playerData.characterDataId || 2097199)
-    log('After CharacterData globalID')
     
-    // 2. SkillSystem (class_385)
-    // 3 skill bars, each with 0 skills
-    this.writeInt(0) // skillbar 0: 0 skills
-    this.writeInt(0) // skillbar 1: 0 skills
-    this.writeInt(0) // skillbar 2: 0 skills
+    this.writeInt(0) // skillbar 0
+    this.writeInt(0) // skillbar 1
+    this.writeInt(0) // skillbar 2
     this.writeInt(-1) // activeSkillBarIndex
     this.writeInt(0) // remainingGlobalCoolDown
     this.writeInt(0) // maxGlobalCoolDown
     this.writeInt(0) // cooldowns count
-    log('After SkillSystem (7 ints)')
     
-    // 3. BuffSystem (class_384)
+    // BuffSystem
     this.writeInt(0) // 0 buffs
-    log('After BuffSystem (1 int)')
+
+    this.writeInt(0) // MaterialsBag
     
-    // 4. Inventory (class_400 -> class_399 -> class_68)
-    // Decode order in class_400.decode():
-    // 1. var_610.decode() (materials bag)
-    // 2. var_550 (gameMoney)
-    // 3. var_188 (diamonds)
-    // 4. var_163 (ingredients - 330 ints)
-    // 5. super.decode() -> class_399.decode():
-    //    a. var_135.decode() (equipment bag - 14 slots)
-    //    b. var_65 (isMeleeEquipped boolean)
-    //    c. super.decode() -> class_68.decode():
-    //       - var_121.decode() (regular bag)
+    this.writeInt(100) // Money
     
-    log('=== START Inventory ===')
+    this.writeInt(0) // Diamonds
     
-    // Materials bag (var_610): 0 slots for now
-    this.writeInt(0)
-    log('After materials bag (0 slots)')
-    
-    // Game money (var_550)
-    this.writeInt(100)
-    log('After gameMoney')
-    
-    // Diamonds (var_188)
-    this.writeInt(0)
-    log('After diamonds')
-    
-    // Ingredients (var_163): 11 ints (11 named ingredient items in ingredients.csv)
-    // Note: ingredients.csv has 330 rows but only 11 unique ingredients (each with level sub-rows)
+    // Ingredients
     for (let i = 0; i < 11; i++) {
       this.writeInt(0)
     }
-    log('After 11 ingredients')
     
-    // Equipment bag (var_135): 14 slots (prop_classes.csv row count)
-    // Each empty slot is just a 0 (null item globalID)
+    // EquipmentBag
     this.writeInt(14)
     for (let i = 0; i < 14; i++) {
-      this.writeInt(0) // empty slot: null item globalID
+      this.writeInt(0) // empty
     }
-    log('After equipment bag (14 empty slots)')
     
-    // isMeleeEquipped (var_65)
-    this.writeBoolean(true)
-    log('After isMeleeEquipped boolean')
+    this.writeBoolean(true) // isMeleeEquipped
     
-    // Regular bag (var_121): 20 slots
+    // RegularBag
     this.writeInt(20)
     for (let i = 0; i < 20; i++) {
-      this.writeInt(0) // empty slot: null item globalID
+      this.writeInt(0) // empty
     }
-    log('After regular bag (20 empty slots)')
+
+    // Attributes
+    this.writeInt(1) // Level
+    this.writeInt(100 << 10) // Health
+    this.writeInt(100 << 10) // Energy
+    this.writeInt(0) // TotalExperience
+    this.writeInt(0) // CurrentExperience
+    this.writeInt(0) // SpecializationID
+    this.writeInt(0) // SpecialRank
+    this.writeInt(0) // SpecialExperience
+    this.writeInt(0) // Flags
     
-    log('=== END Inventory, START Attributes ===')
+    // LogicClientAvatar
+    this.writeLong(0, 1) // HighID, LowID
     
-    // 5. Attributes (class_375 -> class_87 -> class_86)
-    this.writeInt(1) // expLevel
-    log('After expLevel')
-    this.writeInt(100 << 10) // health (100 * 1024)
-    log('After health')
-    // isAlive() = true, so no boolean
-    this.writeInt(100 << 10) // energy (100 * 1024)
-    log('After energy')
-    this.writeInt(0) // var_95 total XP
-    this.writeInt(0) // var_86 current XP
-    this.writeInt(0) // specialization ID
-    this.writeInt(0) // var_283 spec rank
-    this.writeInt(0) // var_66 spec XP
-    this.writeInt(0) // var_897 flags
-    log('After class_375 attrs (6 ints)')
+    this.writeString(playerData.name || "Player") // Name
     
-    log('=== END class_75, START class_76 ===')
+    this.writeString(null) // FacebookID
     
-    // ========================================
-    // class_76 (player-specific)
-    // ========================================
-    
-    // 6. Player ID (long = 2 ints)
-    this.writeInt(0) // high
-    this.writeInt(1) // low - MUST NOT BE 0!
-    log('After Player ID (high=0, low=1)')
-    
-    // 7. Player Name
-    this.writeString(playerData.name || "Player")
-    
-    // 8. Facebook ID (null)
-    this.writeString(null)
-    
-    // 9. Tutorial BitList (64 bits = 2 ints)
+    // TutorialBitList
     this.writeInt(0)
     this.writeInt(0)
     
-    // 10. Flags
+    // Flags
     this.writeInt(0)
     
-    // 11. Daily Reward Collected
-    this.writeBoolean(false)
+    this.writeBoolean(false) // DailyRewardCollected
     
-    // 12. Daily Reward Day
-    this.writeInt(0)
+    this.writeInt(0) // DailyRewardDay
     
-    // 13. MissionSystem (class_50)
+    // MissionSystem
     this.writeInt(0) // 0 active missions
-    // Completed missions BitList: 256 * missionGroups / 32
-    // 6 mission tables (const_401, const_444, const_529, const_397, const_484, const_526)
-    // 256 * 6 = 1536 bits / 32 = 48 ints
     for (let i = 0; i < 48; i++) {
       this.writeInt(0)
     }
-    this.writeInt(0) // 0 daily mission cooldowns
+    this.writeInt(0) // 0 DailyMissionCooldowns
     
-    // 14. Visited Levels BitList: ceil(214/32) = 7 ints
+    // VisitedLevelsBitList
     for (let i = 0; i < 7; i++) {
       this.writeInt(0)
     }
     
-    // 15. Achievements BitList: ceil(53/32) = 2 ints
+    // AchievementsBitList
     for (let i = 0; i < 2; i++) {
       this.writeInt(0)
     }
     
-    // 16. Specializations (class_383)
-    this.writeBoolean(false) // no specialization
+    // Specializations
+    this.writeBoolean(false) // NoSpecialization
     this.writeInt(0) // reSpecCount
     
-    // 17. KnownSkills (class_382)
+    // KnownSkills
     this.writeInt(0) // 0 known skills
     
-    // 18. Party (class_97)
+    // Party
     this.writeInt(0) // 0 party members
     
-    // 19. Mail Attachments (Vector.<int>)
-    this.writeBoolean(false) // null array
+    // MailAttachments
+    this.writeBoolean(false) // null
     
-    // 20. Mercenary Avatar
+    // MercenaryAvatar
     this.writeBoolean(false) // no mercenary
     
-    // 21. Crafting Bot globalID
+    // CraftingBotGlobalID
     this.writeInt(0)
     
-    // 22. Achievements (class_392) - 2 fixed slots
-    this.writeBoolean(false) // slot 0 empty
-    this.writeBoolean(false) // slot 1 empty
+    // Achievements
+    this.writeBoolean(false) // slot 0
+    this.writeBoolean(false) // slot 1
     
-    // 23. Travel Type (3 ints)
+    // TravelType
     this.writeInt(0)
     this.writeInt(0)
     this.writeInt(0)
     
-    // 24. Home Level globalID
-    // GlobalID = (tableIndex << 20) | rowIndex
-    // Table 16 (levels.csv), row 207 = Northern Harbor (IsStartupLevel=TRUE)
-    // globalID = (16 << 20) + 207 = 16777216 + 207 = 16777423
-    this.writeInt(16777423)
+    this.writeInt(16777423) // HomeLevelGlobalID
     
-    // 25. Timestamps (2 ints)
-    const now = Math.floor(Date.now() / 1000)
-    this.writeInt(now)
-    this.writeInt(now)
+    this.writeInt(Math.floor(Date.now() / 1000)) // Timestamp
+    this.writeInt(Math.floor(Date.now() / 1000)) // Timestamp
     
-    // 26. Version
-    this.writeInt(0)
-    log('=== END - Total bytes: ' + this.offset + ' ===')
+    this.writeInt(0) // Version
   }
 }
 

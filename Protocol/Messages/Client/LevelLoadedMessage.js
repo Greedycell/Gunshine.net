@@ -25,22 +25,16 @@ class LevelLoadedMessage extends PiranhaMessage {
     this.version = 0
   }
 
-  async decode() {
-    // Empty message - no payload to decode
-  }
+  async decode() {}
 
   async process() {
     this.client.log('Level loaded, starting game logic...')
     
-    // 1. Send StartLogicMessage to start the game logic timer
     this.client.log('Sending StartLogicMessage (20405)')
     await new StartLogicMessage(this.client).send()
     
-    // 2. Send AvailableServerCommandMessage with AddPlayerCommand to spawn the player
-    // This is required for the client to find the player in getPlayerByAvatarId()
-    // and continue loading past 79%
     const playerData = this.client.playerData || {
-      characterDataId: 2097199,  // MalePlayerConstructionWorker
+      characterDataId: 2097199,  // Fallback
       idHigh: 0,
       idLow: 1,
       name: "Player"

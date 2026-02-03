@@ -34,16 +34,12 @@ class SelectPlayerMessage extends PiranhaMessage {
   async process() {
     this.client.log('Sending CurrentLevelMessage (20407) to load the game')
     
-    // Get the player's home level from stored data
     // Default: Northern Harbor (16777423)
-    // GlobalID = (tableIndex << 20) | rowIndex
-    // Table 16 (levels.csv), row 207 = Northern Harbor
     const homeLevel = this.client.player?.homeLevel || 16777423
     
-    // Send CurrentLevelMessage to load the game
     await new CurrentLevelMessage(this.client, {
       levelGlobalId: homeLevel,
-      zoneType: 100,       // Hub level type (100+)
+      zoneType: 100,
       zoneContainer: 0,
       zoneData: homeLevel,
       zoneId: 0
