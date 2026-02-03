@@ -45,7 +45,7 @@ server.on('connection', async (client) => {
       id: packet.readUInt16BE(0),
       len: packet.readUIntBE(2, 3),
       version: packet.readUInt16BE(5),
-      payload: packet.slice(7, this.len),
+      payload: packet.slice(5, 5 + len),
       client,
     }
     
@@ -94,5 +94,6 @@ mongooseInstance.connect(isSuccess => {
 })
 
 process.on("uncaughtException", e => console.log(e))
+
 
 process.on("unhandledRejection", e => console.log(e))
