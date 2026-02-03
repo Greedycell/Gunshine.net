@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Gunshine.net</title>
+  <style>
+    body { margin:0; background:#000; }
+    #swf {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+<div id="swf"></div>
+
+<script>
+  function addSWF() {
+    function localhost(hostname) {
+      if (
+        window.location.protocol === 'file:' ||
+        hostname === 'localhost' ||
+        hostname === '::1' ||                 // IPv6 loopback
+        hostname.startsWith('127.') ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('192.168.') ||
+        /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)
+      ) {
+        return true;
+      }
+      return false;
+    }
+
+    var host;
+    if (localhost(window.location.hostname)) {
+      host = '127.0.0.1';
+    } else {
+      host = window.location.host;
+    }
+    var resource = '/';
+
+    var swf = document.getElementById('pistol_embed');
+    if (swf) swf.remove();
+
+    var e = document.createElement('embed');
+    e.id = 'pistol_embed';
+    e.name = 'pistol';
+    e.src = 'pistol.swf';
+    e.type = 'application/x-shockwave-flash';
+    e.width = Math.max(300, window.innerWidth - 40);
+    e.height = Math.max(240, window.innerHeight - 40);
+    e.setAttribute('allowscriptaccess','always');
+    e.setAttribute('allowNetworking','all');
+
+    var fv = 'host=' + encodeURIComponent(host) +
+             '&resource_path=' + encodeURIComponent(resource) +
+             '&debug_mode=recording';
+
+    e.setAttribute('flashvars', fv);
+
+    document.getElementById('swf').appendChild(e);
+  }
+
+  window.addEventListener('DOMContentLoaded', addSWF);
+</script>
+</body>
+</html>

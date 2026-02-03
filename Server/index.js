@@ -95,5 +95,4 @@ mongooseInstance.connect(isSuccess => {
 
 process.on("uncaughtException", e => console.log(e))
 
-
 process.on("unhandledRejection", e => console.log(e))
