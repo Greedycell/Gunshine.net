@@ -11,8 +11,9 @@ Open source private server for Gunshine.net (2011) written on Node.js
 4. Now it is finished and you can use my client linked in the releases to connect to your server.
 
 ## Note
-I'm still working on the client for Gunshine.net.
+I'm still working on the client for Gunshine.net but the server does work because I know someone that tested it for me and it works well.
 
 ## Credits
 Core created by [tailsjs](https://github.com/tailsjs/nodebrawl-core)   
+
 
